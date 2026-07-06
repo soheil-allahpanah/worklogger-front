@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { shouldUseSecureCookies } from "@/lib/cookie-options";
 
 export const ACCESS_COOKIE = "wl_access";
 export const REFRESH_COOKIE = "wl_refresh";
@@ -26,7 +27,7 @@ export async function setAuthCookies(
   loginLabel: string,
 ): Promise<void> {
   const store = await cookies();
-  const secure = process.env.NODE_ENV === "production";
+  const secure = shouldUseSecureCookies();
 
   store.set(ACCESS_COOKIE, accessToken, {
     httpOnly: true,
@@ -55,9 +56,12 @@ export async function setAuthCookies(
 
 export async function clearAuthCookies(): Promise<void> {
   const store = await cookies();
-  store.delete(ACCESS_COOKIE);
-  store.delete(REFRESH_COOKIE);
-  store.delete(LOGIN_COOKIE);
+  const secure = shouldUseSecureCookies();
+  const base = { path: "/", secure, sameSite: "lax" as const };
+
+  store.set(ACCESS_COOKIE, "", { ...base, httpOnly: true, maxAge: 0 });
+  store.set(REFRESH_COOKIE, "", { ...base, httpOnly: true, maxAge: 0 });
+  store.set(LOGIN_COOKIE, "", { ...base, httpOnly: false, maxAge: 0 });
 }
 
 export async function ensureAccessToken(): Promise<string | null> {

@@ -112,3 +112,7 @@ Optional environment variables for the script:
 | `USE_HOST_API` | `0` | Set to `1` when the API runs on the host (uses `host.docker.internal`) |
 
 Open [http://localhost:3001/login](http://localhost:3001/login) after deploy.
+
+### LAN access (e.g. `http://192.168.1.105:3001`)
+
+Auth cookies use the `Secure` flag only when `APP_URL` starts with `https://` or `COOKIE_SECURE=true`. Plain HTTP on a LAN IP does not get `Secure` cookies (browsers would otherwise ignore them after login). For HTTPS deployments, set `APP_URL=https://your-host:3001` in your env file.

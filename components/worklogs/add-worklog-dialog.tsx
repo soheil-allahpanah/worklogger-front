@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus } from "lucide-react";
 import type { CreateWorklogInput } from "@/src/entities/worklog/create.schema";
+import { todayJalaliInTehran } from "@/lib/worklog-utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -54,7 +55,7 @@ export function AddWorklogDialog({
     resolver: zodResolver(addWorklogFormSchema),
     defaultValues: {
       description: "",
-      jalali_date: "",
+      jalali_date: todayJalaliInTehran(),
     },
   });
 
@@ -64,7 +65,7 @@ export function AddWorklogDialog({
   const [minutes, setMinutes] = useState("0");
 
   function resetForm() {
-    reset({ description: "", jalali_date: "" });
+    reset({ description: "", jalali_date: todayJalaliInTehran() });
     setTagsInput("");
     setTagsError(null);
     setHours("1");
@@ -72,7 +73,7 @@ export function AddWorklogDialog({
   }
 
   function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen) {
+    if (nextOpen) {
       resetForm();
     }
     onOpenChange(nextOpen);
@@ -121,7 +122,7 @@ export function AddWorklogDialog({
 
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="jalali_date">Jalali Date (optional)</Label>
+            <Label htmlFor="jalali_date">Jalali Date</Label>
             <Input
               id="jalali_date"
               placeholder="1403/06/01"

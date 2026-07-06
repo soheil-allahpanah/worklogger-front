@@ -1,7 +1,25 @@
 import type { FilterWorklogsInput } from "@/src/entities/worklog/filter.schema";
+import { toJalaali } from "jalaali-js";
 
 const TAG_REGEX = /#([\w-]+)/g;
 const JALALI_DATE_REGEX = /\b(\d{4}[/-]\d{2}[/-]\d{2})\b/;
+
+/** Today's Jalali date in Asia/Tehran, formatted as YYYY/MM/DD (matches the API default). */
+export function todayJalaliInTehran(): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tehran",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const year = Number(parts.find((p) => p.type === "year")?.value);
+  const month = Number(parts.find((p) => p.type === "month")?.value);
+  const day = Number(parts.find((p) => p.type === "day")?.value);
+  const { jy, jm, jd } = toJalaali(year, month, day);
+
+  return `${String(jy).padStart(4, "0")}/${String(jm).padStart(2, "0")}/${String(jd).padStart(2, "0")}`;
+}
 
 export function parseSearchQuery(query: string): FilterWorklogsInput {
   const trimmed = query.trim();

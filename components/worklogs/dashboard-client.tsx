@@ -14,7 +14,7 @@ import { WorklogDetailDialog } from "@/components/worklogs/worklog-detail-dialog
 import { WorklogSearchBar } from "@/components/worklogs/worklog-search-bar";
 import { ExportWorklogsButton } from "@/components/worklogs/export-worklogs-button";
 import { WorklogTable } from "@/components/worklogs/worklog-table";
-import { parseSearchQuery } from "@/lib/worklog-utils";
+import { appendTagToSearchQuery, parseSearchQuery } from "@/lib/worklog-utils";
 import type { CreateWorklogInput } from "@/src/entities/worklog/create.schema";
 import type { EditWorklogInput } from "@/src/entities/worklog/edit.schema";
 import type { FilterWorklogsInput } from "@/src/entities/worklog/filter.schema";
@@ -95,6 +95,12 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
     () => parseSearchQuery(debouncedSearch),
     [debouncedSearch],
   );
+
+  function handleTagClick(tag: string) {
+    const next = appendTagToSearchQuery(search, tag);
+    setSearch(next);
+    setDebouncedSearch(next);
+  }
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["worklogs", filter],
@@ -180,6 +186,7 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
                 onView={(w) => setViewWorklog(w)}
                 onEdit={(w) => setEditWorklogTarget(w)}
                 onDelete={(w) => setDeleteWorklogTarget(w)}
+                onTagClick={handleTagClick}
               />
             )}
           </div>
@@ -190,6 +197,7 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
                 statistics={data.statistics}
                 worklogs={data.items}
                 totalItems={data.totalItems}
+                onTagClick={handleTagClick}
               />
             )}
           </aside>
@@ -221,6 +229,7 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
         worklog={viewWorklog}
         open={Boolean(viewWorklog)}
         onOpenChange={(open) => !open && setViewWorklog(null)}
+        onTagClick={handleTagClick}
       />
 
       <DeleteWorklogDialog

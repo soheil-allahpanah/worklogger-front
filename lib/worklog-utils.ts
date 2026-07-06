@@ -65,6 +65,24 @@ export function parseSearchQuery(query: string): FilterWorklogsInput {
   return filter;
 }
 
+/** Append `#tag` to a search query if that tag is not already included. */
+export function appendTagToSearchQuery(query: string, tag: string): string {
+  const normalizedTag = tag.trim().replace(/^#/, "");
+  if (!normalizedTag) return query;
+
+  const existingTags = new Set<string>();
+  for (const match of query.matchAll(TAG_REGEX)) {
+    if (match[1]) existingTags.add(match[1].toLowerCase());
+  }
+
+  if (existingTags.has(normalizedTag.toLowerCase())) {
+    return query;
+  }
+
+  const trimmed = query.trim();
+  return trimmed ? `${trimmed} #${normalizedTag}` : `#${normalizedTag}`;
+}
+
 export function formatDuration(secs: number): string {
   const hours = Math.floor(secs / 3600);
   const minutes = Math.floor((secs % 3600) / 60);

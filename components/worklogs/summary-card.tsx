@@ -9,10 +9,12 @@ export function SummaryCard({
   statistics,
   worklogs,
   totalItems,
+  onTagClick,
 }: {
   statistics: WorklogFilterStatisticsDto;
   worklogs: WorklogDto[];
   totalItems: number;
+  onTagClick?: (tag: string) => void;
 }) {
   const tags = [...new Set(worklogs.flatMap((w) => w.tags))].slice(0, 8);
 
@@ -37,7 +39,7 @@ export function SummaryCard({
       {tags.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
           {tags.map((tag) => (
-            <TagBadge key={tag} tag={tag} />
+            <TagBadge key={tag} tag={tag} onClick={onTagClick} />
           ))}
         </div>
       )}

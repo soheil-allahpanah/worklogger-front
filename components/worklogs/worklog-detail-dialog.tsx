@@ -13,10 +13,12 @@ export function WorklogDetailDialog({
   worklog,
   open,
   onOpenChange,
+  onTagClick,
 }: {
   worklog: WorklogDto | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onTagClick?: (tag: string) => void;
 }) {
   if (!worklog) return null;
 
@@ -43,7 +45,7 @@ export function WorklogDetailDialog({
             <dt className="text-muted-foreground">Tags</dt>
             <dd className="mt-2 flex flex-wrap gap-2">
               {worklog.tags.map((tag) => (
-                <TagBadge key={tag} tag={tag} />
+                <TagBadge key={tag} tag={tag} onClick={onTagClick} />
               ))}
             </dd>
           </div>

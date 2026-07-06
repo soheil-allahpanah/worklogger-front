@@ -33,11 +33,13 @@ export function WorklogTable({
   onView,
   onEdit,
   onDelete,
+  onTagClick,
 }: {
   worklogs: WorklogDto[];
   onView: (worklog: WorklogDto) => void;
   onEdit: (worklog: WorklogDto) => void;
   onDelete: (worklog: WorklogDto) => void;
+  onTagClick?: (tag: string) => void;
 }) {
   const groups = groupWorklogs(worklogs);
 
@@ -89,7 +91,7 @@ export function WorklogTable({
                   <td className="px-4 py-4 align-top">
                     <div className="flex flex-wrap gap-1.5">
                       {worklog.tags.map((tag) => (
-                        <TagBadge key={tag} tag={tag} />
+                        <TagBadge key={tag} tag={tag} onClick={onTagClick} />
                       ))}
                     </div>
                   </td>

@@ -6,8 +6,8 @@ Desktop-first Next.js dashboard for the [Worklogger](../worklogger) Rust API.
 
 - Login / logout (JWT + refresh tokens via httpOnly cookies)
 - Worklog list with unified search/filter bar
-- View, add, and delete worklogs
-- Weekly time summary and active tags
+- View, add, edit, and delete worklogs
+- Filter statistics (total time, days worked, total logs) from the API
 - Clean Architecture layers (`entities` → `application` → `infrastructure` → `interface-adapters` → `app`)
 
 ## Prerequisites

@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
-import { Eye, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { TagBadge } from "@/components/worklogs/tag-badge";
 import { Button } from "@/components/ui/button";
 import { groupLabelForDate } from "@/lib/worklog-utils";
@@ -31,10 +31,12 @@ function groupWorklogs(worklogs: WorklogDto[]): GroupedWorklogs[] {
 export function WorklogTable({
   worklogs,
   onView,
+  onEdit,
   onDelete,
 }: {
   worklogs: WorklogDto[];
   onView: (worklog: WorklogDto) => void;
+  onEdit: (worklog: WorklogDto) => void;
   onDelete: (worklog: WorklogDto) => void;
 }) {
   const groups = groupWorklogs(worklogs);
@@ -100,6 +102,14 @@ export function WorklogTable({
                         aria-label="View worklog"
                       >
                         <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onEdit(worklog)}
+                        aria-label="Edit worklog"
+                      >
+                        <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"

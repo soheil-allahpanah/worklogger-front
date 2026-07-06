@@ -64,6 +64,18 @@ export function formatTotalDuration(secs: number): string {
   return `${minutes} mins`;
 }
 
+export function parseDurationToHoursMinutes(secs: number): {
+  hours: string;
+  minutes: string;
+} {
+  const hours = Math.floor(secs / 3600);
+  const minutes = Math.floor((secs % 3600) / 60);
+  return {
+    hours: hours.toString(),
+    minutes: minutes.toString(),
+  };
+}
+
 export function parseDurationToSecs(input: string): number | null {
   const normalized = input.trim().toLowerCase();
   if (!normalized) return null;

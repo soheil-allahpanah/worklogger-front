@@ -8,24 +8,21 @@ import {
   AddWorklogDialog,
 } from "@/components/worklogs/add-worklog-dialog";
 import { DeleteWorklogDialog } from "@/components/worklogs/delete-worklog-dialog";
+import { EditWorklogDialog } from "@/components/worklogs/edit-worklog-dialog";
 import { SummaryCard } from "@/components/worklogs/summary-card";
 import { WorklogDetailDialog } from "@/components/worklogs/worklog-detail-dialog";
 import { WorklogSearchBar } from "@/components/worklogs/worklog-search-bar";
 import { WorklogTable } from "@/components/worklogs/worklog-table";
 import { parseSearchQuery } from "@/lib/worklog-utils";
 import type { CreateWorklogInput } from "@/src/entities/worklog/create.schema";
+import type { EditWorklogInput } from "@/src/entities/worklog/edit.schema";
 import type { FilterWorklogsInput } from "@/src/entities/worklog/filter.schema";
-import type { WorklogDto } from "@/src/entities/worklog/worklog.schema";
+import type {
+  WorklogDto,
+  WorklogPageDto,
+} from "@/src/entities/worklog/worklog.schema";
 
-type WorklogPageResponse = {
-  items: WorklogDto[];
-  totalItems: number;
-  totalPages: number;
-  currentPage: number;
-  pageSize: number;
-};
-
-async function fetchWorklogs(filter: FilterWorklogsInput): Promise<WorklogPageResponse> {
+async function fetchWorklogs(filter: FilterWorklogsInput): Promise<WorklogPageDto> {
   const response = await fetch("/api/worklogs/filter", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -55,6 +52,21 @@ async function createWorklog(input: CreateWorklogInput) {
   return response.json();
 }
 
+async function editWorklog(id: string, input: EditWorklogInput) {
+  const response = await fetch(`/api/worklogs/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error ?? "Failed to update worklog");
+  }
+
+  return response.json();
+}
+
 async function deleteWorklogById(id: string) {
   const response = await fetch(`/api/worklogs/${id}`, { method: "DELETE" });
   if (!response.ok && response.status !== 204) {
@@ -63,19 +75,13 @@ async function deleteWorklogById(id: string) {
   }
 }
 
-function isWithinLastWeek(datetime: string): boolean {
-  const date = new Date(datetime);
-  const weekAgo = new Date();
-  weekAgo.setDate(weekAgo.getDate() - 7);
-  return date >= weekAgo;
-}
-
 export function DashboardClient({ loginLabel }: { loginLabel: string }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [viewWorklog, setViewWorklog] = useState<WorklogDto | null>(null);
+  const [editWorklogTarget, setEditWorklogTarget] = useState<WorklogDto | null>(null);
   const [deleteWorklogTarget, setDeleteWorklogTarget] = useState<WorklogDto | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,22 +100,26 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
     queryFn: () => fetchWorklogs(filter),
   });
 
-  const { data: weekData } = useQuery({
-    queryKey: ["worklogs-week"],
-    queryFn: () => fetchWorklogs({ paging: { page: 1, size: 500 } }),
-  });
-
-  const weeklyWorklogs = useMemo(
-    () => (weekData?.items ?? []).filter((w) => isWithinLastWeek(w.datetime)),
-    [weekData],
-  );
+  const invalidateWorklogs = () => {
+    queryClient.invalidateQueries({ queryKey: ["worklogs"] });
+  };
 
   const createMutation = useMutation({
     mutationFn: createWorklog,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["worklogs"] });
-      queryClient.invalidateQueries({ queryKey: ["worklogs-week"] });
+      invalidateWorklogs();
       setAddOpen(false);
+      setError(null);
+    },
+    onError: (err: Error) => setError(err.message),
+  });
+
+  const editMutation = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: EditWorklogInput }) =>
+      editWorklog(id, input),
+    onSuccess: () => {
+      invalidateWorklogs();
+      setEditWorklogTarget(null);
       setError(null);
     },
     onError: (err: Error) => setError(err.message),
@@ -118,8 +128,7 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
   const deleteMutation = useMutation({
     mutationFn: deleteWorklogById,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["worklogs"] });
-      queryClient.invalidateQueries({ queryKey: ["worklogs-week"] });
+      invalidateWorklogs();
       setDeleteWorklogTarget(null);
       setError(null);
     },
@@ -159,13 +168,20 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
               <WorklogTable
                 worklogs={data.items}
                 onView={(w) => setViewWorklog(w)}
+                onEdit={(w) => setEditWorklogTarget(w)}
                 onDelete={(w) => setDeleteWorklogTarget(w)}
               />
             )}
           </div>
 
           <aside>
-            <SummaryCard worklogs={weeklyWorklogs} />
+            {data && (
+              <SummaryCard
+                statistics={data.statistics}
+                worklogs={data.items}
+                totalItems={data.totalItems}
+              />
+            )}
           </aside>
         </div>
       </div>
@@ -178,6 +194,16 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
         isSubmitting={createMutation.isPending}
         onSubmit={async (input) => {
           await createMutation.mutateAsync(input);
+        }}
+      />
+
+      <EditWorklogDialog
+        worklog={editWorklogTarget}
+        open={Boolean(editWorklogTarget)}
+        onOpenChange={(open) => !open && setEditWorklogTarget(null)}
+        isSubmitting={editMutation.isPending}
+        onSubmit={async (id, input) => {
+          await editMutation.mutateAsync({ id, input });
         }}
       />
 

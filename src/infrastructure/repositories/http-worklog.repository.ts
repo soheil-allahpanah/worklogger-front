@@ -1,4 +1,5 @@
 import type { CreateWorklogInput } from "@/src/entities/worklog/create.schema";
+import type { EditWorklogInput } from "@/src/entities/worklog/edit.schema";
 import type { FilterWorklogsInput } from "@/src/entities/worklog/filter.schema";
 import {
   worklogPageSchema,
@@ -40,6 +41,18 @@ export class HttpWorklogRepository implements IWorklogRepository {
       accessToken,
     });
     return data;
+  }
+
+  async update(
+    id: string,
+    input: EditWorklogInput,
+    accessToken: string,
+  ): Promise<Worklog> {
+    const data = await this.client.request<unknown>("PUT", `/worklogs/${id}`, {
+      body: input,
+      accessToken,
+    });
+    return worklogSchema.parse(data);
   }
 
   async delete(id: string, accessToken: string): Promise<void> {

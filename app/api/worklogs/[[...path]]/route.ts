@@ -11,6 +11,7 @@ import { filterWorklogsController } from "@/src/interface-adapters/worklogs/filt
 import { createWorklogController } from "@/src/interface-adapters/worklogs/create-worklog.controller";
 import { getWorklogController } from "@/src/interface-adapters/worklogs/get-worklog.controller";
 import { deleteWorklogController } from "@/src/interface-adapters/worklogs/delete-worklog.controller";
+import { editWorklogController } from "@/src/interface-adapters/worklogs/edit-worklog.controller";
 
 function handleError(error: unknown) {
   if (error instanceof UnauthenticatedError) {
@@ -88,6 +89,26 @@ export async function DELETE(
     if (path.length === 1) {
       await deleteWorklogController(path[0], accessToken);
       return new NextResponse(null, { status: 204 });
+    }
+
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+export async function PUT(
+  request: Request,
+  context: { params: Promise<{ path?: string[] }> },
+) {
+  const { path = [] } = await context.params;
+  const accessToken = await ensureAccessToken();
+
+  try {
+    if (path.length === 1) {
+      const body = await request.json();
+      const result = await editWorklogController(path[0], body, accessToken);
+      return NextResponse.json(result);
     }
 
     return NextResponse.json({ error: "Not found" }, { status: 404 });

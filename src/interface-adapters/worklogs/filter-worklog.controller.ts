@@ -28,5 +28,9 @@ export async function filterWorklogsController(
     totalPages: page.total_pages,
     currentPage: page.current_page,
     pageSize: page.page_size,
+    statistics: {
+      totalDurationSecs: page.statistics.total_duration_secs,
+      daysWorked: page.statistics.days_worked,
+    },
   };
 }

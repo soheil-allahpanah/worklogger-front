@@ -15,15 +15,37 @@ export const worklogSchema = z.object({
 
 export type Worklog = z.infer<typeof worklogSchema>;
 
+export const worklogFilterStatisticsSchema = z.object({
+  total_duration_secs: z.number(),
+  days_worked: z.number(),
+});
+
+export type WorklogFilterStatistics = z.infer<typeof worklogFilterStatisticsSchema>;
+
 export const worklogPageSchema = z.object({
   items: z.array(worklogSchema),
   total_items: z.number(),
   total_pages: z.number(),
   current_page: z.number(),
   page_size: z.number(),
+  statistics: worklogFilterStatisticsSchema,
 });
 
 export type WorklogPage = z.infer<typeof worklogPageSchema>;
+
+export type WorklogFilterStatisticsDto = {
+  totalDurationSecs: number;
+  daysWorked: number;
+};
+
+export type WorklogPageDto = {
+  items: WorklogDto[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  statistics: WorklogFilterStatisticsDto;
+};
 
 export type WorklogDto = {
   id: string;

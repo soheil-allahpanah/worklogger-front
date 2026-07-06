@@ -1,6 +1,11 @@
 import type { CreateWorklogInput } from "@/src/entities/worklog/create.schema";
 import type { EditWorklogInput } from "@/src/entities/worklog/edit.schema";
 import type { FilterWorklogsInput } from "@/src/entities/worklog/filter.schema";
+import type { ExportWorklogsResult } from "@/src/entities/worklog/export.schema";
+import {
+  defaultExportFilename,
+  parseExportFilename,
+} from "@/lib/export-utils";
 import {
   worklogPageSchema,
   worklogSchema,
@@ -23,6 +28,26 @@ export class HttpWorklogRepository implements IWorklogRepository {
       { body: input, accessToken },
     );
     return worklogPageSchema.parse(data);
+  }
+
+  async export(
+    input: FilterWorklogsInput,
+    accessToken: string,
+  ): Promise<ExportWorklogsResult> {
+    const response = await this.client.requestBinary(
+      "POST",
+      "/worklogs/export",
+      { body: input, accessToken },
+    );
+
+    return {
+      bytes: new Uint8Array(response.data),
+      filename:
+        parseExportFilename(response.contentDisposition) ??
+        defaultExportFilename(),
+      contentType: response.contentType,
+      rowCount: response.rowCount ?? 0,
+    };
   }
 
   async getById(id: string, accessToken: string): Promise<Worklog> {

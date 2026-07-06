@@ -12,6 +12,7 @@ import { createWorklogController } from "@/src/interface-adapters/worklogs/creat
 import { getWorklogController } from "@/src/interface-adapters/worklogs/get-worklog.controller";
 import { deleteWorklogController } from "@/src/interface-adapters/worklogs/delete-worklog.controller";
 import { editWorklogController } from "@/src/interface-adapters/worklogs/edit-worklog.controller";
+import { exportWorklogsController } from "@/src/interface-adapters/worklogs/export-worklog.controller";
 
 function handleError(error: unknown) {
   if (error instanceof UnauthenticatedError) {
@@ -45,6 +46,19 @@ export async function POST(
       const body = await request.json();
       const result = await filterWorklogsController(body, accessToken);
       return NextResponse.json(result);
+    }
+
+    if (path.length === 1 && path[0] === "export") {
+      const body = await request.json();
+      const result = await exportWorklogsController(body, accessToken);
+      return new NextResponse(Buffer.from(result.bytes), {
+        status: 200,
+        headers: {
+          "Content-Type": result.contentType,
+          "Content-Disposition": `attachment; filename="${result.filename}"`,
+          "X-Row-Count": String(result.rowCount),
+        },
+      });
     }
 
     if (path.length === 0) {

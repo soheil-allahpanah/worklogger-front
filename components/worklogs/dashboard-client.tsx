@@ -12,6 +12,7 @@ import { EditWorklogDialog } from "@/components/worklogs/edit-worklog-dialog";
 import { SummaryCard } from "@/components/worklogs/summary-card";
 import { WorklogDetailDialog } from "@/components/worklogs/worklog-detail-dialog";
 import { WorklogSearchBar } from "@/components/worklogs/worklog-search-bar";
+import { ExportWorklogsButton } from "@/components/worklogs/export-worklogs-button";
 import { WorklogTable } from "@/components/worklogs/worklog-table";
 import { parseSearchQuery } from "@/lib/worklog-utils";
 import type { CreateWorklogInput } from "@/src/entities/worklog/create.schema";
@@ -140,7 +141,16 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
       <DashboardHeader loginLabel={loginLabel} />
 
       <div className="mt-8 space-y-6">
-        <WorklogSearchBar value={search} onChange={setSearch} />
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="flex-1">
+            <WorklogSearchBar value={search} onChange={setSearch} />
+          </div>
+          <ExportWorklogsButton
+            filter={filter}
+            disabled={isLoading}
+            onError={(message) => setError(message)}
+          />
+        </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-4">

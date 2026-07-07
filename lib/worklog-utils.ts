@@ -151,6 +151,24 @@ export function getDisplayName(label: string): string {
     .join(" ");
 }
 
+export function computeTopTagsByHours(
+  worklogs: { tags: string[]; durationSecs: number }[],
+  limit = 20,
+): { tag: string; durationSecs: number }[] {
+  const totals = new Map<string, number>();
+
+  for (const worklog of worklogs) {
+    for (const tag of worklog.tags) {
+      totals.set(tag, (totals.get(tag) ?? 0) + worklog.durationSecs);
+    }
+  }
+
+  return [...totals.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([tag, durationSecs]) => ({ tag, durationSecs }));
+}
+
 export function groupLabelForDate(jalaliDate: string, datetime: string): string {
   const date = new Date(datetime);
   const today = new Date();

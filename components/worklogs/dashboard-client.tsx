@@ -9,7 +9,8 @@ import {
 } from "@/components/worklogs/add-worklog-dialog";
 import { DeleteWorklogDialog } from "@/components/worklogs/delete-worklog-dialog";
 import { EditWorklogDialog } from "@/components/worklogs/edit-worklog-dialog";
-import { SummaryCard } from "@/components/worklogs/summary-card";
+import { StatsSummaryCard } from "@/components/worklogs/stats-summary-card";
+import { TagCloudCard } from "@/components/worklogs/tag-cloud-card";
 import { WorklogDetailDialog } from "@/components/worklogs/worklog-detail-dialog";
 import { WorklogSearchBar } from "@/components/worklogs/worklog-search-bar";
 import { ExportWorklogsButton } from "@/components/worklogs/export-worklogs-button";
@@ -76,7 +77,7 @@ async function deleteWorklogById(id: string) {
   }
 }
 
-export function DashboardClient({ loginLabel }: { loginLabel: string }) {
+export function DashboardClient() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -143,11 +144,11 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
   });
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-7xl px-8 py-8">
-      <DashboardHeader loginLabel={loginLabel} />
+    <div className="mx-auto min-h-screen w-full max-w-7xl px-6 py-4">
+      <DashboardHeader />
 
-      <div className="mt-8 space-y-6">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+      <div className="mt-3 space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="flex-1">
             <WorklogSearchBar value={search} onChange={setSearch} />
           </div>
@@ -158,50 +159,41 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
-          <div className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              My Worklogs
-            </p>
-
-            {error && (
-              <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-red-300">
-                {error}
-              </p>
-            )}
-
-            {isLoading && (
-              <div className="py-16 text-center text-muted-foreground">Loading worklogs...</div>
-            )}
-
-            {isError && (
-              <div className="py-16 text-center text-red-400">
-                Failed to load worklogs. Please try again.
-              </div>
-            )}
-
-            {!isLoading && !isError && data && (
-              <WorklogTable
-                worklogs={data.items}
-                onView={(w) => setViewWorklog(w)}
-                onEdit={(w) => setEditWorklogTarget(w)}
-                onDelete={(w) => setDeleteWorklogTarget(w)}
-                onTagClick={handleTagClick}
-              />
-            )}
+        {data && (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <StatsSummaryCard
+              statistics={data.statistics}
+              totalItems={data.totalItems}
+            />
+            <TagCloudCard worklogs={data.items} onTagClick={handleTagClick} />
           </div>
+        )}
 
-          <aside>
-            {data && (
-              <SummaryCard
-                statistics={data.statistics}
-                worklogs={data.items}
-                totalItems={data.totalItems}
-                onTagClick={handleTagClick}
-              />
-            )}
-          </aside>
-        </div>
+        {error && (
+          <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-red-300">
+            {error}
+          </p>
+        )}
+
+        {isLoading && (
+          <div className="py-12 text-center text-muted-foreground">Loading worklogs...</div>
+        )}
+
+        {isError && (
+          <div className="py-12 text-center text-red-400">
+            Failed to load worklogs. Please try again.
+          </div>
+        )}
+
+        {!isLoading && !isError && data && (
+          <WorklogTable
+            worklogs={data.items}
+            onView={(w) => setViewWorklog(w)}
+            onEdit={(w) => setEditWorklogTarget(w)}
+            onDelete={(w) => setDeleteWorklogTarget(w)}
+            onTagClick={handleTagClick}
+          />
+        )}
       </div>
 
       <AddLogFab onClick={() => setAddOpen(true)} />

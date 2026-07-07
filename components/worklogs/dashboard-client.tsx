@@ -77,7 +77,7 @@ async function deleteWorklogById(id: string) {
   }
 }
 
-export function DashboardClient() {
+export function DashboardClient({ loginLabel }: { loginLabel: string }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -145,7 +145,7 @@ export function DashboardClient() {
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-7xl px-6 py-4">
-      <DashboardHeader />
+      <DashboardHeader loginLabel={loginLabel} />
 
       <div className="mt-3 space-y-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

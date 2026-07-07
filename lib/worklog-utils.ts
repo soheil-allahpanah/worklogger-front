@@ -2,7 +2,97 @@ import type { FilterWorklogsInput } from "@/src/entities/worklog/filter.schema";
 import { toJalaali } from "jalaali-js";
 
 const TAG_REGEX = /#([\w-]+)/g;
-const JALALI_DATE_REGEX = /\b(\d{4}[/-]\d{2}[/-]\d{2})\b/;
+const JALALI_DATE_PART = String.raw`\d{4}[/-]\d{1,2}[/-]\d{1,2}|\d{8}`;
+
+/** Normalize flexible Jalali input to YYYY/MM/DD for the API. */
+export function normalizeJalaliDate(input: string): string | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  const compact = trimmed.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (compact) {
+    return formatJalaliDate(compact[1], compact[2], compact[3]);
+  }
+
+  const separated = trimmed.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+  if (separated) {
+    return formatJalaliDate(separated[1], separated[2], separated[3]);
+  }
+
+  return null;
+}
+
+function formatJalaliDate(year: string, month: string, day: string): string | null {
+  const y = Number.parseInt(year, 10);
+  const m = Number.parseInt(month, 10);
+  const d = Number.parseInt(day, 10);
+
+  if (y < 1300 || y > 1500 || m < 1 || m > 12 || d < 1 || d > 31) {
+    return null;
+  }
+
+  return `${String(y).padStart(4, "0")}/${String(m).padStart(2, "0")}/${String(d).padStart(2, "0")}`;
+}
+
+function extractDateFilter(remaining: string): {
+  dateFilter?: { from?: string; to?: string };
+  rest: string;
+} {
+  const cleanup = (value: string) => value.replace(/\s+/g, " ").trim();
+
+  const fullRange = remaining.match(
+    new RegExp(String.raw`\b(${JALALI_DATE_PART})\.\.(${JALALI_DATE_PART})\b`),
+  );
+  if (fullRange) {
+    const from = normalizeJalaliDate(fullRange[1]);
+    const to = normalizeJalaliDate(fullRange[2]);
+    if (from && to) {
+      return {
+        dateFilter: { from, to },
+        rest: cleanup(remaining.replace(fullRange[0], " ")),
+      };
+    }
+  }
+
+  const sinceRange = remaining.match(
+    new RegExp(String.raw`\b(${JALALI_DATE_PART})\.\.(?!\d)`),
+  );
+  if (sinceRange) {
+    const from = normalizeJalaliDate(sinceRange[1]);
+    if (from) {
+      return {
+        dateFilter: { from },
+        rest: cleanup(remaining.replace(sinceRange[0], " ")),
+      };
+    }
+  }
+
+  const untilRange = remaining.match(
+    new RegExp(String.raw`\.\.(${JALALI_DATE_PART})\b`),
+  );
+  if (untilRange) {
+    const to = normalizeJalaliDate(untilRange[1]);
+    if (to) {
+      return {
+        dateFilter: { to },
+        rest: cleanup(remaining.replace(untilRange[0], " ")),
+      };
+    }
+  }
+
+  const single = remaining.match(new RegExp(String.raw`\b(${JALALI_DATE_PART})\b`));
+  if (single) {
+    const date = normalizeJalaliDate(single[1]);
+    if (date) {
+      return {
+        dateFilter: { from: date, to: date },
+        rest: cleanup(remaining.replace(single[0], " ")),
+      };
+    }
+  }
+
+  return { rest: remaining };
+}
 
 /** Today's Jalali date in Asia/Tehran, formatted as YYYY/MM/DD (matches the API default). */
 export function todayJalaliInTehran(): string {
@@ -45,12 +135,11 @@ export function parseSearchQuery(query: string): FilterWorklogsInput {
     filter.tags = { in_list: tags };
   }
 
-  const dateMatch = remaining.match(JALALI_DATE_REGEX);
-  if (dateMatch) {
-    const normalized = dateMatch[1].replace(/-/g, "/");
-    filter.date = { from: normalized, to: normalized };
-    remaining = remaining.replace(dateMatch[0], "").trim();
+  const { dateFilter, rest: afterDate } = extractDateFilter(remaining);
+  if (dateFilter) {
+    filter.date = dateFilter;
   }
+  remaining = afterDate;
 
   const durationMatch = remaining.match(/\b(\d+h(?:\d+m)?|\d+m|\d+s)\b/i);
   if (durationMatch) {

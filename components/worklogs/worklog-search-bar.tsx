@@ -16,7 +16,7 @@ export function WorklogSearchBar({
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Search logs by date, duration, description, tags, or projects..."
+        placeholder="Search by date (1405/4/3, 14050413, 1405/4/3.., ..1405/4/3), duration, tags (#tag), description..."
         className="h-10 rounded-xl border-border/80 bg-surface pl-10 pr-10 text-sm"
       />
       {value && (

@@ -3,6 +3,77 @@ import { toJalaali } from "jalaali-js";
 
 const TAG_REGEX = /#([\w-]+)/g;
 const JALALI_DATE_PART = String.raw`\d{4}[/-]\d{1,2}[/-]\d{1,2}|\d{8}`;
+const DURATION_PART = String.raw`\d+h(?:\d+m)?|\d+m|\d+s`;
+
+/** Normalize duration input to a standard token the API accepts (e.g. 2h, 30m, 2h30m). */
+export function normalizeDuration(input: string): string | null {
+  const normalized = input.trim().toLowerCase();
+  if (!normalized.match(/^(?:\d+h(?:\d+m)?|\d+m|\d+s)$/)) {
+    return null;
+  }
+
+  return parseDurationToSecs(normalized) ? normalized : null;
+}
+
+function extractDurationFilter(remaining: string): {
+  durationFilter?: { from?: string; to?: string };
+  rest: string;
+} {
+  const cleanup = (value: string) => value.replace(/\s+/g, " ").trim();
+
+  const fullRange = remaining.match(
+    new RegExp(String.raw`\b(${DURATION_PART})\.\.(${DURATION_PART})\b`, "i"),
+  );
+  if (fullRange) {
+    const from = normalizeDuration(fullRange[1]);
+    const to = normalizeDuration(fullRange[2]);
+    if (from && to) {
+      return {
+        durationFilter: { from, to },
+        rest: cleanup(remaining.replace(fullRange[0], " ")),
+      };
+    }
+  }
+
+  const sinceRange = remaining.match(
+    new RegExp(String.raw`\b(${DURATION_PART})\.\.(?!\d)`, "i"),
+  );
+  if (sinceRange) {
+    const from = normalizeDuration(sinceRange[1]);
+    if (from) {
+      return {
+        durationFilter: { from },
+        rest: cleanup(remaining.replace(sinceRange[0], " ")),
+      };
+    }
+  }
+
+  const untilRange = remaining.match(
+    new RegExp(String.raw`\.\.(${DURATION_PART})\b`, "i"),
+  );
+  if (untilRange) {
+    const to = normalizeDuration(untilRange[1]);
+    if (to) {
+      return {
+        durationFilter: { to },
+        rest: cleanup(remaining.replace(untilRange[0], " ")),
+      };
+    }
+  }
+
+  const single = remaining.match(new RegExp(String.raw`\b(${DURATION_PART})\b`, "i"));
+  if (single) {
+    const duration = normalizeDuration(single[1]);
+    if (duration) {
+      return {
+        durationFilter: { from: duration, to: duration },
+        rest: cleanup(remaining.replace(single[0], " ")),
+      };
+    }
+  }
+
+  return { rest: remaining };
+}
 
 /** Normalize flexible Jalali input to YYYY/MM/DD for the API. */
 export function normalizeJalaliDate(input: string): string | null {
@@ -141,11 +212,11 @@ export function parseSearchQuery(query: string): FilterWorklogsInput {
   }
   remaining = afterDate;
 
-  const durationMatch = remaining.match(/\b(\d+h(?:\d+m)?|\d+m|\d+s)\b/i);
-  if (durationMatch) {
-    filter.duration = { from: durationMatch[1], to: durationMatch[1] };
-    remaining = remaining.replace(durationMatch[0], "").trim();
+  const { durationFilter, rest: afterDuration } = extractDurationFilter(remaining);
+  if (durationFilter) {
+    filter.duration = durationFilter;
   }
+  remaining = afterDuration;
 
   if (remaining.length > 0) {
     filter.description = { contains: remaining };

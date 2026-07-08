@@ -16,6 +16,7 @@ import { WorklogSearchBar } from "@/components/worklogs/worklog-search-bar";
 import { ExportWorklogsButton } from "@/components/worklogs/export-worklogs-button";
 import { WorklogTable } from "@/components/worklogs/worklog-table";
 import { appendTagToSearchQuery, parseSearchQuery } from "@/lib/worklog-utils";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import type { CreateWorklogInput } from "@/src/entities/worklog/create.schema";
 import type { EditWorklogInput } from "@/src/entities/worklog/edit.schema";
 import type { FilterWorklogsInput } from "@/src/entities/worklog/filter.schema";
@@ -86,15 +87,29 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
   const [editWorklogTarget, setEditWorklogTarget] = useState<WorklogDto | null>(null);
   const [deleteWorklogTarget, setDeleteWorklogTarget] = useState<WorklogDto | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(timer);
   }, [search]);
 
-  const filter = useMemo(
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, pageSize]);
+
+  const searchCriteria = useMemo(
     () => parseSearchQuery(debouncedSearch),
     [debouncedSearch],
+  );
+
+  const filter = useMemo(
+    () => ({
+      ...searchCriteria,
+      paging: { page, size: pageSize },
+    }),
+    [searchCriteria, page, pageSize],
   );
 
   function handleTagClick(tag: string) {
@@ -103,10 +118,16 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
     setDebouncedSearch(next);
   }
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, isFetching } = useQuery({
     queryKey: ["worklogs", filter],
     queryFn: () => fetchWorklogs(filter),
   });
+
+  useEffect(() => {
+    if (data && page > data.totalPages && data.totalPages > 0) {
+      setPage(data.totalPages);
+    }
+  }, [data, page]);
 
   const invalidateWorklogs = () => {
     queryClient.invalidateQueries({ queryKey: ["worklogs"] });
@@ -153,7 +174,7 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
             <WorklogSearchBar value={search} onChange={setSearch} />
           </div>
           <ExportWorklogsButton
-            filter={filter}
+            filter={searchCriteria}
             disabled={isLoading}
             onError={(message) => setError(message)}
           />
@@ -188,6 +209,13 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
         {!isLoading && !isError && data && (
           <WorklogTable
             worklogs={data.items}
+            currentPage={data.currentPage}
+            totalPages={data.totalPages}
+            totalItems={data.totalItems}
+            pageSize={data.pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            paginationDisabled={isFetching}
             onView={(w) => setViewWorklog(w)}
             onEdit={(w) => setEditWorklogTarget(w)}
             onDelete={(w) => setDeleteWorklogTarget(w)}

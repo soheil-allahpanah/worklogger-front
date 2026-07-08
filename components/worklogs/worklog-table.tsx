@@ -3,6 +3,7 @@
 import { Fragment } from "react";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { TagBadge } from "@/components/worklogs/tag-badge";
+import { WorklogTablePagination } from "@/components/worklogs/worklog-table-pagination";
 import { Button } from "@/components/ui/button";
 import { groupLabelForDate } from "@/lib/worklog-utils";
 import type { WorklogDto } from "@/src/entities/worklog/worklog.schema";
@@ -30,12 +31,26 @@ function groupWorklogs(worklogs: WorklogDto[]): GroupedWorklogs[] {
 
 export function WorklogTable({
   worklogs,
+  currentPage,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  paginationDisabled,
   onView,
   onEdit,
   onDelete,
   onTagClick,
 }: {
   worklogs: WorklogDto[];
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+  paginationDisabled?: boolean;
   onView: (worklog: WorklogDto) => void;
   onEdit: (worklog: WorklogDto) => void;
   onDelete: (worklog: WorklogDto) => void;
@@ -45,8 +60,19 @@ export function WorklogTable({
 
   if (worklogs.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border py-16 text-center text-muted-foreground">
-        No worklogs found. Try adjusting your search or add a new log.
+      <div className="overflow-hidden rounded-xl border border-border">
+        <div className="border-b border-dashed border-border py-16 text-center text-muted-foreground">
+          No worklogs found. Try adjusting your search or add a new log.
+        </div>
+        <WorklogTablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+          disabled={paginationDisabled}
+        />
       </div>
     );
   }
@@ -129,6 +155,15 @@ export function WorklogTable({
           ))}
         </tbody>
       </table>
+      <WorklogTablePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        disabled={paginationDisabled}
+      />
     </div>
   );
 }

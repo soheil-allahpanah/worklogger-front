@@ -8,14 +8,14 @@ import {
   downloadBlob,
   parseExportFilename,
 } from "@/lib/export-utils";
-import type { FilterWorklogsInput } from "@/src/entities/worklog/filter.schema";
+import type { WorklogSearchCriteria } from "@/src/entities/worklog/filter.schema";
 
 export function ExportWorklogsButton({
   filter,
   disabled,
   onError,
 }: {
-  filter: FilterWorklogsInput;
+  filter: WorklogSearchCriteria;
   disabled?: boolean;
   onError?: (message: string) => void;
 }) {
@@ -27,7 +27,10 @@ export function ExportWorklogsButton({
       const response = await fetch("/api/worklogs/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(filter),
+        body: JSON.stringify({
+          ...filter,
+          paging: { page: 1, size: 500 },
+        }),
       });
 
       if (!response.ok) {

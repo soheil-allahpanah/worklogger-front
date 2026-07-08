@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
 export const filterWorklogsInputSchema = z.object({
   tags: z
@@ -27,9 +28,10 @@ export const filterWorklogsInputSchema = z.object({
   paging: z
     .object({
       page: z.number().int().min(1).default(1),
-      size: z.number().int().min(1).max(500).default(50),
+      size: z.number().int().min(1).max(500).default(DEFAULT_PAGE_SIZE),
     })
-    .default({ page: 1, size: 50 }),
+    .default({ page: 1, size: DEFAULT_PAGE_SIZE }),
 });
 
 export type FilterWorklogsInput = z.infer<typeof filterWorklogsInputSchema>;
+export type WorklogSearchCriteria = Omit<FilterWorklogsInput, "paging">;

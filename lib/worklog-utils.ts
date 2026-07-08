@@ -1,4 +1,4 @@
-import type { FilterWorklogsInput } from "@/src/entities/worklog/filter.schema";
+import type { FilterWorklogsInput, WorklogSearchCriteria } from "@/src/entities/worklog/filter.schema";
 import { toJalaali } from "jalaali-js";
 
 const TAG_REGEX = /#([\w-]+)/g;
@@ -182,10 +182,10 @@ export function todayJalaliInTehran(): string {
   return `${String(jy).padStart(4, "0")}/${String(jm).padStart(2, "0")}/${String(jd).padStart(2, "0")}`;
 }
 
-export function parseSearchQuery(query: string): FilterWorklogsInput {
+export function parseSearchQuery(query: string): WorklogSearchCriteria {
   const trimmed = query.trim();
   if (!trimmed) {
-    return { paging: { page: 1, size: 50 } };
+    return {};
   }
 
   const tags: string[] = [];
@@ -198,9 +198,7 @@ export function parseSearchQuery(query: string): FilterWorklogsInput {
 
   remaining = remaining.replace(/\s+/g, " ").trim();
 
-  const filter: FilterWorklogsInput = {
-    paging: { page: 1, size: 50 },
-  };
+  const filter: WorklogSearchCriteria = {};
 
   if (tags.length > 0) {
     filter.tags = { in_list: tags };

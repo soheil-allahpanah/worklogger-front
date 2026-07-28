@@ -24,6 +24,7 @@ import type {
   WorklogDto,
   WorklogPageDto,
 } from "@/src/entities/worklog/worklog.schema";
+import type { TagStatsDto } from "@/src/entities/worklog/tag-stats.schema";
 
 async function fetchWorklogs(filter: FilterWorklogsInput): Promise<WorklogPageDto> {
   const response = await fetch("/api/worklogs/filter", {
@@ -35,6 +36,21 @@ async function fetchWorklogs(filter: FilterWorklogsInput): Promise<WorklogPageDt
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     throw new Error(body.error ?? "Failed to fetch worklogs");
+  }
+
+  return response.json();
+}
+
+async function fetchTagStats(filter: FilterWorklogsInput): Promise<TagStatsDto> {
+  const response = await fetch("/api/worklogs/tag-stats", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(filter),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error ?? "Failed to fetch tag stats");
   }
 
   return response.json();
@@ -123,6 +139,18 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
     queryFn: () => fetchWorklogs(filter),
   });
 
+  const {
+    data: tagStats,
+    isLoading: tagStatsLoading,
+  } = useQuery({
+    queryKey: ["worklog-tag-stats", searchCriteria],
+    queryFn: () =>
+      fetchTagStats({
+        ...searchCriteria,
+        paging: { page: 1, size: 1 },
+      }),
+  });
+
   useEffect(() => {
     if (data && page > data.totalPages && data.totalPages > 0) {
       setPage(data.totalPages);
@@ -131,6 +159,7 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
 
   const invalidateWorklogs = () => {
     queryClient.invalidateQueries({ queryKey: ["worklogs"] });
+    queryClient.invalidateQueries({ queryKey: ["worklog-tag-stats"] });
   };
 
   const createMutation = useMutation({
@@ -180,13 +209,19 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
           />
         </div>
 
-        {data && (
+        {(data || tagStats || tagStatsLoading) && (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <StatsSummaryCard
-              statistics={data.statistics}
-              totalItems={data.totalItems}
+            {data && (
+              <StatsSummaryCard
+                statistics={data.statistics}
+                totalItems={data.totalItems}
+              />
+            )}
+            <TagCloudCard
+              tags={tagStats?.tags ?? []}
+              isLoading={tagStatsLoading}
+              onTagClick={handleTagClick}
             />
-            <TagCloudCard worklogs={data.items} onTagClick={handleTagClick} />
           </div>
         )}
 

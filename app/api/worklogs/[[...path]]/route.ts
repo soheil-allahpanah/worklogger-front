@@ -13,6 +13,7 @@ import { getWorklogController } from "@/src/interface-adapters/worklogs/get-work
 import { deleteWorklogController } from "@/src/interface-adapters/worklogs/delete-worklog.controller";
 import { editWorklogController } from "@/src/interface-adapters/worklogs/edit-worklog.controller";
 import { exportWorklogsController } from "@/src/interface-adapters/worklogs/export-worklog.controller";
+import { tagStatsController } from "@/src/interface-adapters/worklogs/tag-stats.controller";
 
 function handleError(error: unknown) {
   if (error instanceof UnauthenticatedError) {
@@ -45,6 +46,12 @@ export async function POST(
     if (path.length === 1 && path[0] === "filter") {
       const body = await request.json();
       const result = await filterWorklogsController(body, accessToken);
+      return NextResponse.json(result);
+    }
+
+    if (path.length === 1 && path[0] === "tag-stats") {
+      const body = await request.json();
+      const result = await tagStatsController(body, accessToken);
       return NextResponse.json(result);
     }
 

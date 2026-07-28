@@ -1,38 +1,46 @@
 "use client";
 
-import { computeTopTagsByHours } from "@/lib/worklog-utils";
 import { getTagColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
-import type { WorklogDto } from "@/src/entities/worklog/worklog.schema";
+import type { TagStatDto } from "@/src/entities/worklog/tag-stats.schema";
 
 const MIN_FONT_REM = 0.7;
 const MAX_FONT_REM = 1.5;
+const DISPLAY_LIMIT = 20;
 
 export function TagCloudCard({
-  worklogs,
+  tags,
+  isLoading,
   onTagClick,
 }: {
-  worklogs: WorklogDto[];
+  tags: TagStatDto[];
+  isLoading?: boolean;
   onTagClick?: (tag: string) => void;
 }) {
-  const tags = computeTopTagsByHours(worklogs, 20);
-  const maxSecs = tags[0]?.durationSecs ?? 1;
+  const topTags = tags.slice(0, DISPLAY_LIMIT);
+  const maxSecs = topTags[0]?.durationSecs ?? 1;
 
   return (
     <div className="flex h-36 flex-col rounded-xl border border-border bg-surface-elevated px-5 py-3">
       <p className="mb-2 shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Top Tags
       </p>
-      {tags.length === 0 ? (
+      {isLoading ? (
+        <p className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+          Loading tags...
+        </p>
+      ) : topTags.length === 0 ? (
         <p className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
           No tags in current results
         </p>
       ) : (
         <div className="flex flex-1 flex-wrap content-center items-center justify-center gap-x-3 gap-y-1 overflow-hidden">
-          {tags.map(({ tag, durationSecs }) => {
+          {topTags.map(({ tag, durationSecs, daysWorked }) => {
             const colors = getTagColor(tag);
             const scale = durationSecs / maxSecs;
             const fontSize = MIN_FONT_REM + scale * (MAX_FONT_REM - MIN_FONT_REM);
+            const hours = Math.round((durationSecs / 3600) * 10) / 10;
+            const title = `${tag}: ${hours}h over ${daysWorked} day${daysWorked === 1 ? "" : "s"}`;
 
             if (onTagClick) {
               return (
@@ -45,7 +53,7 @@ export function TagCloudCard({
                     colors.text,
                   )}
                   style={{ fontSize: `${fontSize}rem` }}
-                  title={`${tag}: ${Math.round(durationSecs / 3600 * 10) / 10}h`}
+                  title={title}
                   aria-label={`Filter by tag ${tag}`}
                 >
                   #{tag}
@@ -58,6 +66,7 @@ export function TagCloudCard({
                 key={tag}
                 className={cn("font-medium leading-tight", colors.text)}
                 style={{ fontSize: `${fontSize}rem` }}
+                title={title}
               >
                 #{tag}
               </span>

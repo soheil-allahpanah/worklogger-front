@@ -12,6 +12,10 @@ import {
   type Worklog,
   type WorklogPage,
 } from "@/src/entities/worklog/worklog.schema";
+import {
+  tagStatsSchema,
+  type TagStatsDto,
+} from "@/src/entities/worklog/tag-stats.schema";
 import type { IWorklogRepository } from "@/src/application/worklogs/worklog.repository.interface";
 import { WorkloggerClient } from "@/src/infrastructure/http/worklogger-client";
 
@@ -28,6 +32,26 @@ export class HttpWorklogRepository implements IWorklogRepository {
       { body: input, accessToken },
     );
     return worklogPageSchema.parse(data);
+  }
+
+  async tagStats(
+    input: FilterWorklogsInput,
+    accessToken: string,
+  ): Promise<TagStatsDto> {
+    const data = await this.client.request<unknown>(
+      "POST",
+      "/worklogs/tag-stats",
+      { body: input, accessToken },
+    );
+    const parsed = tagStatsSchema.parse(data);
+    return {
+      tags: parsed.tags.map((stat) => ({
+        tag: stat.tag,
+        durationSecs: stat.duration_secs,
+        daysWorked: stat.days_worked,
+        worklogCount: stat.worklog_count,
+      })),
+    };
   }
 
   async export(

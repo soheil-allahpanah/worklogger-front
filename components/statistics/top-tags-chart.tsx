@@ -11,13 +11,18 @@ export type TagBar = {
 
 export function TopTagsChart({ rows }: { rows: TagBar[] }) {
   return (
-    <section className="min-w-0 flex-1 rounded-xl border border-border bg-surface p-5">
-      <h2 className="mb-3 text-sm font-semibold text-foreground">Top tags (hours)</h2>
+    <section className="flex h-full min-w-0 flex-col gap-3 overflow-hidden rounded-xl border border-border bg-surface p-5">
+      <h2 className="text-sm font-semibold text-foreground">Top tags (hours)</h2>
       {rows.length === 0 ? (
-        <p className="flex h-40 items-center text-sm text-muted-foreground">No tags in this range</p>
+        <p className="flex min-h-40 flex-1 items-center text-sm text-muted-foreground">No tags in this range</p>
       ) : (
-        <div className="w-full min-w-0" style={{ height: Math.max(rows.length * 36, 160) }}>
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="w-full min-w-0 flex-1" style={{ height: Math.max(rows.length * 36, 180) }}>
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+            minWidth={0}
+            initialDimension={{ width: 480, height: Math.max(rows.length * 36, 180) }}
+          >
             <BarChart
               data={rows}
               layout="vertical"

@@ -24,12 +24,12 @@ export function ProjectShareChart({
   const legend = [...slices].sort((a, b) => b.secs - a.secs || a.label.localeCompare(b.label));
 
   return (
-    <section className="flex w-full flex-col gap-3 rounded-xl border border-border bg-surface p-5 xl:w-[360px] xl:shrink-0">
+    <section className="flex h-full min-w-0 w-full flex-col gap-3 rounded-xl border border-border bg-surface p-5">
       <h2 className="text-sm font-semibold text-foreground">Project share</h2>
       {totalSecs <= 0 ? (
-        <p className="flex h-40 items-center text-sm text-muted-foreground">No hours in this range</p>
+        <p className="flex min-h-40 flex-1 items-center text-sm text-muted-foreground">No hours in this range</p>
       ) : (
-        <div className="flex flex-wrap items-center gap-5">
+        <div className="flex min-h-40 flex-1 flex-wrap items-center gap-5">
           <div className="relative h-40 w-40 shrink-0">
             <PieChart width={160} height={160}>
               <Pie

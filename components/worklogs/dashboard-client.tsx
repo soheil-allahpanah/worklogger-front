@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { useSearchQuery } from "@/components/layout/search-query-provider";
 import {
@@ -13,9 +13,8 @@ import { EditWorklogDialog } from "@/components/worklogs/edit-worklog-dialog";
 import { StatsSummaryCard } from "@/components/worklogs/stats-summary-card";
 import { TagCloudCard } from "@/components/worklogs/tag-cloud-card";
 import { WorklogDetailDialog } from "@/components/worklogs/worklog-detail-dialog";
-import { WorklogSearchBar } from "@/components/worklogs/worklog-search-bar";
 import { ExportWorklogsButton } from "@/components/worklogs/export-worklogs-button";
-import { QuickFilters } from "@/components/worklogs/quick-filters";
+import { WorklogFilterBar } from "@/components/worklogs/worklog-filter-bar";
 import { WorklogTable } from "@/components/worklogs/worklog-table";
 import { fetchTagStats, fetchWorklogs } from "@/lib/worklog-api";
 import { appendTagToSearchQuery, parseSearchQuery } from "@/lib/worklog-utils";
@@ -64,8 +63,7 @@ async function deleteWorklogById(id: string) {
 
 export function DashboardClient() {
   const queryClient = useQueryClient();
-  const { search, setSearch } = useSearchQuery();
-  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  const { search, debouncedSearch, hydrated, commitSearch } = useSearchQuery();
   const [addOpen, setAddOpen] = useState(false);
   const [viewWorklog, setViewWorklog] = useState<WorklogDto | null>(null);
   const [editWorklogTarget, setEditWorklogTarget] = useState<WorklogDto | null>(null);
@@ -73,11 +71,6 @@ export function DashboardClient() {
   const [error, setError] = useState<string | null>(null);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [pageState, setPageState] = useState({ key: "", page: 1 });
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300);
-    return () => clearTimeout(timer);
-  }, [search]);
 
   const pageKey = `${debouncedSearch}\0${pageSize}`;
   const page = pageState.key === pageKey ? pageState.page : 1;
@@ -100,14 +93,13 @@ export function DashboardClient() {
   );
 
   function handleTagClick(tag: string) {
-    const next = appendTagToSearchQuery(search, tag);
-    setSearch(next);
-    setDebouncedSearch(next);
+    commitSearch(appendTagToSearchQuery(search, tag));
   }
 
   const { data, isLoading, isError, isFetching } = useQuery({
     queryKey: ["worklogs", filter],
     queryFn: () => fetchWorklogs(filter),
+    enabled: hydrated,
   });
 
   const {
@@ -120,6 +112,7 @@ export function DashboardClient() {
         ...searchCriteria,
         paging: { page: 1, size: 1 },
       }),
+    enabled: hydrated,
   });
 
   if (data && page > data.totalPages && data.totalPages > 0) {
@@ -167,18 +160,15 @@ export function DashboardClient() {
       <DashboardHeader />
 
       <div className="mt-3 space-y-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="flex-1">
-            <WorklogSearchBar value={search} onChange={setSearch} />
-          </div>
-          <ExportWorklogsButton
-            filter={searchCriteria}
-            disabled={isLoading}
-            onError={(message) => setError(message)}
-          />
-        </div>
-
-        <QuickFilters />
+        <WorklogFilterBar
+          trailing={
+            <ExportWorklogsButton
+              filter={searchCriteria}
+              disabled={!hydrated || isLoading}
+              onError={(message) => setError(message)}
+            />
+          }
+        />
 
         {(data || tagStats || tagStatsLoading) && (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -202,7 +192,7 @@ export function DashboardClient() {
           </p>
         )}
 
-        {isLoading && (
+        {(!hydrated || isLoading) && (
           <div className="py-12 text-center text-muted-foreground">Loading worklogs...</div>
         )}
 

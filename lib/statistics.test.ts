@@ -69,6 +69,10 @@ describe("statistics aggregation", () => {
       from: "1405/08/09",
       to: "1405/08/15",
     });
+    expect(chartDomain(undefined, ["1405/08/14", "1405/08/04", "1405/08/10"], noon)).toEqual({
+      from: "1405/08/04",
+      to: "1405/08/14",
+    });
     expect(chartDomain({ to: "1405/08/10" }, ["1405/08/04", "1405/08/08"], noon)).toEqual({
       from: "1405/08/04",
       to: "1405/08/10",

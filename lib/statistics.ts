@@ -48,12 +48,16 @@ export function chartDomain(
   itemDates: string[],
   now = new Date(),
 ): JalaliRange {
-  if (!date?.from && !date?.to) return jalaliRangeFor("this-week", now);
   const today = jalaliRangeFor("today", now).from;
-  if (date.from && date.to) return orderedRange(date.from, date.to);
-  if (date.from) return orderedRange(date.from, today);
-  const earliest = [...itemDates].sort()[0] ?? date.to!;
-  return orderedRange(earliest, date.to!);
+  if (date?.from && date?.to) return orderedRange(date.from, date.to);
+  if (date?.from) return orderedRange(date.from, today);
+  if (date?.to) {
+    const earliest = [...itemDates].sort()[0] ?? date.to;
+    return orderedRange(earliest, date.to);
+  }
+  const sorted = [...itemDates].filter(Boolean).sort();
+  if (sorted.length > 0) return orderedRange(sorted[0]!, sorted[sorted.length - 1]!);
+  return jalaliRangeFor("this-week", now);
 }
 
 export function aggregateDays(items: StatsWorklog[], domain: JalaliRange): DayBucket[] {

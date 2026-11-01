@@ -37,7 +37,7 @@ function savedFiltersSnapshot() {
 }
 
 export function QuickFilters() {
-  const { search, setSearch } = useSearchQuery();
+  const { search, commitSearch } = useSearchQuery();
   const storedFilters = useSyncExternalStore(
     subscribeSavedFilters,
     savedFiltersSnapshot,
@@ -56,7 +56,7 @@ export function QuickFilters() {
 
   function applyPreset(preset: DatePreset) {
     const range = jalaliRangeFor(preset);
-    setSearch((current) => withDateRange(current, range.from, range.to));
+    commitSearch(withDateRange(search, range.from, range.to));
   }
 
   function saveCurrent(event: React.FormEvent) {
@@ -106,7 +106,7 @@ export function QuickFilters() {
             key={tag}
             type="button"
             aria-pressed={active}
-            onClick={() => setSearch((current) => toggleTagInSearchQuery(current, tag))}
+            onClick={() => commitSearch(toggleTagInSearchQuery(search, tag))}
             className={cn(
               "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-opacity",
               colors.bg,
@@ -124,7 +124,7 @@ export function QuickFilters() {
 
       <button
         type="button"
-        onClick={() => setSearch("")}
+        onClick={() => commitSearch("")}
         className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         <X className="h-3.5 w-3.5" />
@@ -147,7 +147,7 @@ export function QuickFilters() {
           >
             <button
               type="button"
-              onClick={() => setSearch(filter.query)}
+              onClick={() => commitSearch(filter.query)}
               className="inline-flex items-center gap-1.5 py-1.5 pl-3 pr-1"
             >
               <Star className="h-3.5 w-3.5" />

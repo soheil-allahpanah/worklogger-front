@@ -15,8 +15,8 @@ export function HoursByDayChart({ days }: { days: DayBucket[] }) {
   const hasData = days.some((day) => day.total > 0);
 
   return (
-    <section className="flex min-w-0 flex-col gap-3 rounded-xl border border-border bg-surface p-5">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+    <section className="flex h-full min-w-0 flex-col gap-3 rounded-xl border border-border bg-surface p-5">
+      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <h2 className="text-sm font-semibold text-foreground">Hours per day by project</h2>
         <ul className="flex flex-wrap gap-3">
           {PROJECT_GROUPS.map((group) => (
@@ -35,8 +35,13 @@ export function HoursByDayChart({ days }: { days: DayBucket[] }) {
         </ul>
       </header>
       {hasData ? (
-        <div className="h-[220px] w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="h-[200px] w-full min-w-0">
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+            minWidth={0}
+            initialDimension={{ width: 480, height: 200 }}
+          >
             <BarChart data={days} margin={{ top: 8, right: 4, left: 0, bottom: 0 }} barCategoryGap="28%">
               <XAxis
                 dataKey="label"
@@ -66,7 +71,7 @@ export function HoursByDayChart({ days }: { days: DayBucket[] }) {
           </ResponsiveContainer>
         </div>
       ) : (
-        <p className="flex h-[220px] items-center justify-center text-sm text-muted-foreground">
+        <p className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">
           No hours in this range
         </p>
       )}

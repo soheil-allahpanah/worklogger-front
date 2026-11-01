@@ -16,6 +16,7 @@ import {
 import { logoutAction } from "@/app/actions/auth.actions";
 import { useSearchQuery } from "@/components/layout/search-query-provider";
 import { useTheme } from "@/components/providers/theme-provider";
+import { hrefWithSearchQuery } from "@/lib/search-query";
 import { cn } from "@/lib/utils";
 import { getDisplayName, queryHasTag, toggleTagInSearchQuery } from "@/lib/worklog-utils";
 
@@ -27,7 +28,7 @@ const SIDEBAR_TAGS = [
 
 export function AppSidebar({ loginLabel }: { loginLabel: string }) {
   const pathname = usePathname();
-  const { search, setSearch } = useSearchQuery();
+  const { search, commitSearch } = useSearchQuery();
   const { theme, toggleTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
   const displayName = getDisplayName(loginLabel);
@@ -68,14 +69,14 @@ export function AppSidebar({ loginLabel }: { loginLabel: string }) {
 
       <nav className="flex flex-col gap-1" aria-label="Primary">
         <SidebarLink
-          href="/dashboard"
+          href={hrefWithSearchQuery("/dashboard", search)}
           label="Worklogs"
           active={worklogsActive}
           collapsed={collapsed}
           icon={<List className="h-[18px] w-[18px] shrink-0" />}
         />
         <SidebarLink
-          href="/statistics"
+          href={hrefWithSearchQuery("/statistics", search)}
           label="Statistics"
           active={statisticsActive}
           collapsed={collapsed}
@@ -117,7 +118,7 @@ export function AppSidebar({ loginLabel }: { loginLabel: string }) {
               type="button"
               title={`Filter by #${item.tag}`}
               aria-pressed={active}
-              onClick={() => setSearch((current) => toggleTagInSearchQuery(current, item.tag))}
+              onClick={() => commitSearch(toggleTagInSearchQuery(search, item.tag))}
               className={cn(
                 "flex items-center gap-2.5 rounded-lg py-1.5 pl-3 text-[13px] text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground",
                 collapsed && "justify-center px-0 pl-0",

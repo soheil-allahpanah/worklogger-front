@@ -1,5 +1,5 @@
-import type { FilterWorklogsInput, WorklogSearchCriteria } from "@/src/entities/worklog/filter.schema";
-import { toJalaali } from "jalaali-js";
+import { todayJalali } from "@/lib/jalali-range";
+import type { WorklogSearchCriteria } from "@/src/entities/worklog/filter.schema";
 
 const TAG_REGEX = /#([\w-]+)/g;
 const JALALI_DATE_PART = String.raw`\d{4}[/-]\d{1,2}[/-]\d{1,2}|\d{8}`;
@@ -167,19 +167,47 @@ function extractDateFilter(remaining: string): {
 
 /** Today's Jalali date in Asia/Tehran, formatted as YYYY/MM/DD (matches the API default). */
 export function todayJalaliInTehran(): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Tehran",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
+  return todayJalali();
+}
 
-  const year = Number(parts.find((p) => p.type === "year")?.value);
-  const month = Number(parts.find((p) => p.type === "month")?.value);
-  const day = Number(parts.find((p) => p.type === "day")?.value);
-  const { jy, jm, jd } = toJalaali(year, month, day);
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
-  return `${String(jy).padStart(4, "0")}/${String(jm).padStart(2, "0")}/${String(jd).padStart(2, "0")}`;
+const dateTokenPattern = () =>
+  new RegExp(
+    String.raw`\b(?:${JALALI_DATE_PART})\.\.(?:${JALALI_DATE_PART})\b|\b(?:${JALALI_DATE_PART})\.\.(?!\d)|\.\.(?:${JALALI_DATE_PART})\b|\b(?:${JALALI_DATE_PART})\b`,
+    "g",
+  );
+
+/** Remove Jalali date tokens so a quick range can replace them without dropping tags. */
+export function stripDateTokens(query: string): string {
+  return query.replace(dateTokenPattern(), " ").replace(/\s+/g, " ").trim();
+}
+
+/** Write `from..to` into a search query, preserving tags, duration, and description. */
+export function withDateRange(query: string, from: string, to: string): string {
+  const rest = stripDateTokens(query);
+  const range = `${from}..${to}`;
+  return rest ? `${range} ${rest}` : range;
+}
+
+export function queryHasTag(query: string, tag: string): boolean {
+  const normalized = tag.trim().replace(/^#/, "");
+  if (!normalized) return false;
+  const pattern = new RegExp(String.raw`(^|\s)#${escapeRegExp(normalized)}(?=\s|$)`, "i");
+  return pattern.test(query);
+}
+
+/** Add `#tag` when missing, or remove it when it is already in the query. */
+export function toggleTagInSearchQuery(query: string, tag: string): string {
+  const normalized = tag.trim().replace(/^#/, "");
+  if (!normalized) return query;
+  if (!queryHasTag(query, normalized)) {
+    return appendTagToSearchQuery(query, normalized);
+  }
+  const pattern = new RegExp(String.raw`(^|\s)#${escapeRegExp(normalized)}(?=\s|$)`, "i");
+  return query.replace(pattern, " ").replace(/\s+/g, " ").trim();
 }
 
 export function parseSearchQuery(query: string): WorklogSearchCriteria {

@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
+import { useSearchQuery } from "@/components/layout/search-query-provider";
 import {
   AddLogFab,
   AddWorklogDialog,
@@ -14,47 +15,14 @@ import { TagCloudCard } from "@/components/worklogs/tag-cloud-card";
 import { WorklogDetailDialog } from "@/components/worklogs/worklog-detail-dialog";
 import { WorklogSearchBar } from "@/components/worklogs/worklog-search-bar";
 import { ExportWorklogsButton } from "@/components/worklogs/export-worklogs-button";
+import { QuickFilters } from "@/components/worklogs/quick-filters";
 import { WorklogTable } from "@/components/worklogs/worklog-table";
+import { fetchTagStats, fetchWorklogs } from "@/lib/worklog-api";
 import { appendTagToSearchQuery, parseSearchQuery } from "@/lib/worklog-utils";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import type { CreateWorklogInput } from "@/src/entities/worklog/create.schema";
 import type { EditWorklogInput } from "@/src/entities/worklog/edit.schema";
-import type { FilterWorklogsInput } from "@/src/entities/worklog/filter.schema";
-import type {
-  WorklogDto,
-  WorklogPageDto,
-} from "@/src/entities/worklog/worklog.schema";
-import type { TagStatsDto } from "@/src/entities/worklog/tag-stats.schema";
-
-async function fetchWorklogs(filter: FilterWorklogsInput): Promise<WorklogPageDto> {
-  const response = await fetch("/api/worklogs/filter", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(filter),
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.error ?? "Failed to fetch worklogs");
-  }
-
-  return response.json();
-}
-
-async function fetchTagStats(filter: FilterWorklogsInput): Promise<TagStatsDto> {
-  const response = await fetch("/api/worklogs/tag-stats", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(filter),
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.error ?? "Failed to fetch tag stats");
-  }
-
-  return response.json();
-}
+import type { WorklogDto } from "@/src/entities/worklog/worklog.schema";
 
 async function createWorklog(input: CreateWorklogInput) {
   const response = await fetch("/api/worklogs", {
@@ -94,26 +62,29 @@ async function deleteWorklogById(id: string) {
   }
 }
 
-export function DashboardClient({ loginLabel }: { loginLabel: string }) {
+export function DashboardClient() {
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const { search, setSearch } = useSearchQuery();
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [addOpen, setAddOpen] = useState(false);
   const [viewWorklog, setViewWorklog] = useState<WorklogDto | null>(null);
   const [editWorklogTarget, setEditWorklogTarget] = useState<WorklogDto | null>(null);
   const [deleteWorklogTarget, setDeleteWorklogTarget] = useState<WorklogDto | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [pageState, setPageState] = useState({ key: "", page: 1 });
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(timer);
   }, [search]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, pageSize]);
+  const pageKey = `${debouncedSearch}\0${pageSize}`;
+  const page = pageState.key === pageKey ? pageState.page : 1;
+
+  function setPage(next: number) {
+    setPageState({ key: pageKey, page: next });
+  }
 
   const searchCriteria = useMemo(
     () => parseSearchQuery(debouncedSearch),
@@ -151,11 +122,9 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
       }),
   });
 
-  useEffect(() => {
-    if (data && page > data.totalPages && data.totalPages > 0) {
-      setPage(data.totalPages);
-    }
-  }, [data, page]);
+  if (data && page > data.totalPages && data.totalPages > 0) {
+    setPage(data.totalPages);
+  }
 
   const invalidateWorklogs = () => {
     queryClient.invalidateQueries({ queryKey: ["worklogs"] });
@@ -194,8 +163,8 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
   });
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-7xl px-6 py-4">
-      <DashboardHeader loginLabel={loginLabel} />
+    <div className="min-h-full w-full px-6 py-4 pb-24">
+      <DashboardHeader />
 
       <div className="mt-3 space-y-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -208,6 +177,8 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
             onError={(message) => setError(message)}
           />
         </div>
+
+        <QuickFilters />
 
         {(data || tagStats || tagStatsLoading) && (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -226,7 +197,7 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
         )}
 
         {error && (
-          <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-red-300">
+          <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-danger">
             {error}
           </p>
         )}
@@ -236,7 +207,7 @@ export function DashboardClient({ loginLabel }: { loginLabel: string }) {
         )}
 
         {isError && (
-          <div className="py-12 text-center text-red-400">
+          <div className="py-12 text-center text-danger">
             Failed to load worklogs. Please try again.
           </div>
         )}

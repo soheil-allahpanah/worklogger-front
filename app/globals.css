@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
-:root {
+/* Figma Theme collection. Dark is the default; .light overrides from the Light mode. */
+:root,
+.dark {
+  color-scheme: dark;
   --background: #0f1117;
   --foreground: #f3f4f6;
   --surface: #1a1d27;
@@ -10,6 +13,55 @@
   --primary: #5865f2;
   --primary-foreground: #ffffff;
   --destructive: #ef4444;
+  --sidebar: #0b0d13;
+  --nav-active: #222633;
+  --nav-active-foreground: #ffffff;
+  --primary-soft: #2a2f5a;
+  --primary-soft-foreground: #aab2ff;
+  --danger: #f87171;
+  --tag-blue: #93c5fd;
+  --tag-pink: #f9a8d4;
+  --tag-purple: #d8b4fe;
+  --tag-teal: #5eead4;
+  --tag-orange: #fdba74;
+  --tag-emerald: #6ee7b7;
+  --heat-0: #2d3344;
+  --heat-1: #3730a3;
+  --heat-2: #6366f1;
+  --heat-3: #a5b4fc;
+  --segment-track: #222633;
+  --segment-active: #1a1d27;
+}
+
+.light {
+  color-scheme: light;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --surface: #ffffff;
+  --surface-elevated: #f1f5f9;
+  --border: #e2e8f0;
+  --muted-foreground: #64748b;
+  --primary: #5865f2;
+  --primary-foreground: #ffffff;
+  --destructive: #dc2626;
+  --sidebar: #ffffff;
+  --nav-active: #eef0fe;
+  --nav-active-foreground: #4338ca;
+  --primary-soft: #e0e3fd;
+  --primary-soft-foreground: #4338ca;
+  --danger: #dc2626;
+  --tag-blue: #1d4ed8;
+  --tag-pink: #be185d;
+  --tag-purple: #7e22ce;
+  --tag-teal: #0f766e;
+  --tag-orange: #c2410c;
+  --tag-emerald: #047857;
+  --heat-0: #e2e8f0;
+  --heat-1: #c7d2fe;
+  --heat-2: #818cf8;
+  --heat-3: #4f46e5;
+  --segment-track: #e2e8f0;
+  --segment-active: #ffffff;
 }
 
 @theme inline {
@@ -22,6 +74,14 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-destructive: var(--destructive);
+  --color-sidebar: var(--sidebar);
+  --color-nav-active: var(--nav-active);
+  --color-nav-active-foreground: var(--nav-active-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-foreground: var(--primary-soft-foreground);
+  --color-danger: var(--danger);
+  --color-segment-track: var(--segment-track);
+  --color-segment-active: var(--segment-active);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

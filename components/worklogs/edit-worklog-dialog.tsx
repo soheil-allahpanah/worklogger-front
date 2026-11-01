@@ -105,7 +105,7 @@ function EditWorklogForm({
           {...register("jalali_date")}
         />
         {errors.jalali_date && (
-          <p className="text-sm text-red-400">{errors.jalali_date.message}</p>
+          <p className="text-sm text-danger">{errors.jalali_date.message}</p>
         )}
       </div>
 
@@ -142,7 +142,7 @@ function EditWorklogForm({
           value={tagsInput}
           onChange={(e) => setTagsInput(e.target.value)}
         />
-        {tagsError && <p className="text-sm text-red-400">{tagsError}</p>}
+        {tagsError && <p className="text-sm text-danger">{tagsError}</p>}
       </div>
 
       <div className="space-y-2">
@@ -154,7 +154,7 @@ function EditWorklogForm({
           {...register("description")}
         />
         {errors.description && (
-          <p className="text-sm text-red-400">{errors.description.message}</p>
+          <p className="text-sm text-danger">{errors.description.message}</p>
         )}
       </div>
 

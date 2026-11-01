@@ -60,7 +60,7 @@ export function WorklogTable({
 
   if (worklogs.length === 0) {
     return (
-      <div className="overflow-hidden rounded-xl border border-border">
+      <div className="overflow-x-auto rounded-xl border border-border">
         <div className="border-b border-dashed border-border py-16 text-center text-muted-foreground">
           No worklogs found. Try adjusting your search or add a new log.
         </div>
@@ -78,8 +78,8 @@ export function WorklogTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border">
-      <table className="w-full text-left text-sm">
+    <div className="overflow-x-auto rounded-xl border border-border">
+      <table className="w-full min-w-[720px] text-left text-sm">
         <thead>
           <tr className="border-b border-border bg-surface-elevated/50 text-xs uppercase tracking-wider text-muted-foreground">
             <th className="px-4 py-3 font-medium">Date</th>
@@ -145,7 +145,7 @@ export function WorklogTable({
                         onClick={() => onDelete(worklog)}
                         aria-label="Delete worklog"
                       >
-                        <Trash2 className="h-4 w-4 text-red-400" />
+                        <Trash2 className="h-4 w-4 text-danger" />
                       </Button>
                     </div>
                   </td>
